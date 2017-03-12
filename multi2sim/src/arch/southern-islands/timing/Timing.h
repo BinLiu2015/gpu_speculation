@@ -54,6 +54,9 @@ class Timing : public comm::Timing
 	// Pipeline debug file name
 	static std::string pipeline_debug_file;
 
+	// Shader Hint file
+	static std::string hint_file;
+
 	// If true
 	// how a message describing the format for the x86 configuration file
 	// Passed with option --x86-help

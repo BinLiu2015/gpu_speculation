@@ -151,6 +151,38 @@ void ComputeUnit::Issue(FetchBuffer *fetch_buffer,
 		if (!wavefront)
 			continue;
 
+		// Wavefront is ready but waiting on outstanding
+		// memory instructions
+		if (wavefront_pool_entry->mem_wait)
+		{
+			// No outstanding accesses
+			if (!wavefront_pool_entry->lgkm_cnt &&
+				!wavefront_pool_entry->exp_cnt &&
+				!wavefront_pool_entry->vm_cnt)
+			{
+					wavefront_pool_entry->mem_wait = false;
+					Timing::pipeline_debug << misc::fmt(
+							"wg=%d/wf=%d "
+							"Mem-wait:Done\n",
+							wavefront->
+							getWorkGroup()->
+							getId(),
+							wavefront->getId());
+			}
+			else
+			{
+				// TODO show a waiting state in Visualization
+				// tool for the wait.
+				Timing::pipeline_debug << misc::fmt(
+						"wg=%d/wf=%d "
+						"Waiting-Mem\n",
+						wavefront->getWorkGroup()->
+						getId(),
+						wavefront->getId());
+				continue;
+			}
+		}
+
 		// Find the associated uop
 		auto it = fetch_buffer->begin(index);
 		Uop *uop = it->get();
@@ -418,40 +450,6 @@ void ComputeUnit::Fetch(FetchBuffer *fetch_buffer,
 		// Wavefront is ready but waiting at barrier
 		if (wavefront_pool_entry->wait_for_barrier)
 			continue;
-
-#if 0
-		// Wavefront is ready but waiting on outstanding
-		// memory instructions
-		if (wavefront_pool_entry->mem_wait)
-		{
-			// No outstanding accesses
-			if (!wavefront_pool_entry->lgkm_cnt &&
-				!wavefront_pool_entry->exp_cnt &&
-				!wavefront_pool_entry->vm_cnt)
-			{
-					wavefront_pool_entry->mem_wait = false;
-					Timing::pipeline_debug << misc::fmt(
-							"wg=%d/wf=%d "
-							"Mem-wait:Done\n",
-							wavefront->
-							getWorkGroup()->
-							getId(),
-							wavefront->getId());
-			}
-			else
-			{
-				// TODO show a waiting state in Visualization
-				// tool for the wait.
-				Timing::pipeline_debug << misc::fmt(
-						"wg=%d/wf=%d "
-						"Waiting-Mem\n",
-						wavefront->getWorkGroup()->
-						getId(),
-						wavefront->getId());
-				continue;
-			}
-		}
-#endif
 
 		// Emulate instructions
 		wavefront->Execute();
