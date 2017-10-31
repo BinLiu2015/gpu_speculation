@@ -55,6 +55,12 @@ class FetchBuffer
 	// Flag shows last fetched buffer entry is full
 	bool last_fetched_entry_full;
 
+	// Index of last issued normal wavefront index list
+	int last_issued_normal_list_index;
+
+	// Index of last issued speculation wavefront index list
+	int last_issued_speculation_list_index;
+
 	// Flag shows whether there is a successful issue to the execution unit
 	bool branch_unit_issued;
 	bool scalar_unit_issued;
@@ -128,6 +134,12 @@ public:
 			return false;
 	}
 
+	/// Clear the given entry in the fetch buffer
+	void ClearFetchBufferEntry(int index)
+	{
+		buffer[index].clear();
+	}
+
 	/// Return the id of last fetched wavefront index in fetch buffer
 	int getLastFetchedWavefrontIndex() const
 	{
@@ -138,6 +150,18 @@ public:
 	int getLastIssuedWavefrontIndex() const
 	{
 		return last_issued_wavefront_index;
+	}
+
+	///
+	int getLastIssuedNormalListIndex() const
+	{
+		return last_issued_normal_list_index;
+	}
+
+	///
+	int getLastIssuedSpeculationListIndex() const
+	{
+		return last_issued_speculation_list_index;
 	}
 
 	/// Return the issued flag for different execution unit
@@ -191,7 +215,7 @@ public:
 		lds_unit_issued = value;
 	}
 
-	void setLastFatchedWavefrontIndex(int index)
+	void setLastFetchedWavefrontIndex(int index)
 	{
 		last_fetched_wavefront_index = index;
  	}
@@ -209,6 +233,18 @@ public:
 	void setLastFetchedEntryFull(bool value)
 	{
 		last_fetched_entry_full = value;
+	}
+
+	///
+	void setLastIssuedNormalListIndex(int index)
+	{
+		last_issued_normal_list_index = index;
+	}
+
+	///
+	void setLastIssuedSpeculationListIndex(int index)
+	{
+		last_issued_speculation_list_index = index;
 	}
 
 	void ResetExecutionUnitIssueFlag();

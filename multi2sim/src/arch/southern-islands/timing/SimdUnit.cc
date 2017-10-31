@@ -109,6 +109,10 @@ void SimdUnit::Complete()
 		num_instructions++;
 		gpu->last_complete_cycle = compute_unit->getTiming()->getCycle();
 
+		// Release Scoreboard
+		compute_unit->getScoreboard(uop->getWavefrontPoolId())->
+			ReleaseRegisters(uop->getWavefront(), uop);
+
 		// Remove uop from the exec buffer and get the iterator to the
 		// next element
 		it = exec_buffer.erase(it);

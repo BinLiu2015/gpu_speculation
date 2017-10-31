@@ -108,6 +108,10 @@ void LdsUnit::Complete()
 				uop->getIdInComputeUnit(),
 				compute_unit->getIndex());
 
+		// Release Scoreboard
+		compute_unit->getScoreboard(uop->getWavefrontPoolId())->
+			ReleaseRegisters(uop->getWavefront(), uop);
+
 		// Access complete, remove the uop from the queue
 		it = write_buffer.erase(it);
 		assert(uop->getWorkGroup()

@@ -44,11 +44,11 @@ class ScoreBoard
 
 	// Keep track of long operation pending writes to scalar registers such as
 	// global store
-	std::vector<std::set<unsigned>> long_operation_scalar_register_table;
+	std::vector<std::set<unsigned>> long_scalar_operation_register_table;
 
 	// Keep track of long operation pending writes to vector registers such as
 	// global store
-	std::vector<std::set<unsigned>> long_operation_vector_register_table;
+	std::vector<std::set<unsigned>> long_vector_operation_register_table;
 
 	// SM that it belongs to, assigned in constructor
 	ComputeUnit *compute_unit;
@@ -91,6 +91,10 @@ public:
 	/// register table. Return true if WAW or RAW hazard detected.(no WAR
 	/// since in-order issue)
 	bool CheckCollision(Wavefront *wavefront, Uop *uop);
+
+	/// Check if the given instruction has RAW dependeny with a long latency
+	/// operation such as
+	bool IsLongOpCollision(Wavefront *wavefront, Uop *uop);
 };
 
 } // namespace SI

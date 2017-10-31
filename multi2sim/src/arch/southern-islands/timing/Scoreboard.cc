@@ -35,9 +35,9 @@ ScoreBoard::ScoreBoard(int id, ComputeUnit *compute_unit):
 					max_wavefronts_per_wavefront_pool);
 	vector_register_table.resize(compute_unit->
 					max_wavefronts_per_wavefront_pool);
-	long_operation_scalar_register_table.resize(compute_unit->
+	long_scalar_operation_register_table.resize(compute_unit->
 				max_wavefronts_per_wavefront_pool);
-	long_operation_vector_register_table.resize(compute_unit->
+	long_vector_operation_register_table.resize(compute_unit->
 				max_wavefronts_per_wavefront_pool);
 }
 
@@ -102,15 +102,14 @@ void ScoreBoard::ReserveRegisters(Wavefront *wavefront, Uop *uop)
 	}
 
 	// Track long latency scalar operations
-	if (format == Instruction::FormatMTBUF || format == Instruction::FormatMUBUF
-			|| format == Instruction::FormatMIMG)
+	if (format == Instruction::FormatSMRD)
 	{
 		for (unsigned i = 0; i < 16; i++)
 		{
 			int index = uop->getDestinationScalarRegisterIndex(i);
 			if (index > 0)
 			{
-				this->long_operation_scalar_register_table
+				this->long_scalar_operation_register_table
 				[wavefront->getWavefrontPoolEntry()->getIdInWavefrontPool()].
 						insert(index);
 			}
@@ -126,7 +125,7 @@ void ScoreBoard::ReserveRegisters(Wavefront *wavefront, Uop *uop)
 			int index = uop->getDestinationVectorRegisterIndex(i);
 			if (index > 0)
 			{
-				this->long_operation_vector_register_table
+				this->long_vector_operation_register_table
 				[wavefront->getWavefrontPoolEntry()->getIdInWavefrontPool()].
 						insert(index);
 			}
@@ -187,7 +186,7 @@ void ScoreBoard::ReleaseRegisters(Wavefront *wavefront, Uop *uop)
 			int index = uop->getDestinationScalarRegisterIndex(i);
 			if (index > 0)
 			{
-				this->long_operation_scalar_register_table
+				this->long_scalar_operation_register_table
 				[wavefront->getWavefrontPoolEntry()->getIdInWavefrontPool()].
 					erase(index);
 			}
@@ -203,7 +202,7 @@ void ScoreBoard::ReleaseRegisters(Wavefront *wavefront, Uop *uop)
 			int index = uop->getDestinationVectorRegisterIndex(i);
 			if (index > 0)
 			{
-				this->long_operation_vector_register_table
+				this->long_vector_operation_register_table
 				[wavefront->getWavefrontPoolEntry()->getIdInWavefrontPool()].
 					erase(index);
 			}
@@ -266,6 +265,67 @@ bool ScoreBoard::CheckCollision(Wavefront *wavefront, Uop *uop)
 			return true;
 	}
 	return false;
+}
+
+bool ScoreBoard::IsLongOpCollision(Wavefront *wavefront, Uop *uop)
+{
+	int wavefront_pool_entry_index = wavefront->getWavefrontPoolEntry()->
+				getIdInWavefrontPool();
+
+	// Get list of vector registers
+	std::set<int> instruction_vector_registers;
+
+	// Get list of  destination registers
+	std::set<int> instruction_scalar_registers;
+
+	std::set<int>::iterator index;
+
+	bool flag = false;
+
+	// Insert source scalar registers
+	for (int i = 0; i < 4; i++)
+		if (uop->getSourceScalarRegisterIndex(i) > 0)
+			instruction_scalar_registers.insert
+				(uop->getDestinationScalarRegisterIndex(i));
+
+	// Insert source vector registers
+	for (int i = 0; i < 4; i++)
+		if (uop->getSourceVectorRegisterIndex(i) > 0)
+			instruction_vector_registers.insert
+				(uop->getDestinationVectorRegisterIndex(i));
+
+	// Check for collision scalar registers
+	for (index = instruction_scalar_registers.begin();
+			index != instruction_scalar_registers.end(); index++)
+	{
+		if (long_scalar_operation_register_table[wavefront_pool_entry_index].
+					find(*index) != long_scalar_operation_register_table
+							[wavefront_pool_entry_index].end())
+		{
+			wavefront->getWavefrontPoolEntry()->
+						long_op_dependent_register.push_back(*index);
+			flag = true;
+		}
+	}
+
+	// Check for collision vector registers
+	for (index = instruction_vector_registers.begin();
+			index != instruction_vector_registers.end(); index++)
+	{
+		if (long_vector_operation_register_table[wavefront_pool_entry_index].
+					find(*index) != long_vector_operation_register_table
+							[wavefront_pool_entry_index].end())
+		{
+			wavefront->getWavefrontPoolEntry()->
+						long_op_dependent_register.push_back(*index);
+			flag = true;
+		}
+	}
+
+	if (flag)
+		return true;
+	else
+		return false;
 }
 
 

@@ -34,14 +34,19 @@ FetchBuffer::FetchBuffer(int id, ComputeUnit *compute_unit) :
 					compute_unit(compute_unit)
 			{
 				// Initialize the uop buffer
-				buffer.resize(compute_unit->fetch_buffer_size *
-							num_slots_per_entry);
+				buffer.resize(compute_unit->fetch_buffer_size);
 
 				// Initialize the last fetched warp index
 				last_fetched_wavefront_index = 0;
 
 				// Initialize the last dispatched warp index
-				last_issued_wavefront_index = -1;
+				last_issued_wavefront_index = 0;
+
+				// Initialize the last issued normal list index
+				last_issued_normal_list_index = 0;
+
+				// Initialize last issued speculation list index
+				last_issued_speculation_list_index = 0;
 
 				last_fetched_entry_full = false;
 

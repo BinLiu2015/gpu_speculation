@@ -86,6 +86,8 @@ void ScalarUnit::Issue(std::unique_ptr<Uop> uop)
 		
 		// Keep track of statistics
 		compute_unit->num_scalar_memory_instructions++;
+
+		// move to compute unit.cc issue
 		uop->getWavefrontPoolEntry()->lgkm_cnt++;
 	}
 	else
@@ -128,6 +130,8 @@ void ScalarUnit::Complete()
 			 uop->getWavefrontPoolEntry()->vm_cnt ||
 			 uop->getWavefrontPoolEntry()->exp_cnt))
 		{
+
+			this->getComputeUnit()->long_latency_stall_cycles++;
 			// Trace
 			Timing::trace << misc::fmt("si.inst "
 					"id=%lld "
@@ -159,18 +163,24 @@ void ScalarUnit::Complete()
 		// Check for "wait" instruction
 		// If a wait instruction was executed and there are outstanding
 		// memory accesses, set the wavefront to waiting
+
+		// adjust this part in issue stage
+/*
 		if (uop->memory_wait)
 		{
 			uop->getWavefrontPoolEntry()->mem_wait = true;
 		}
-
+*/
 		// Check for "barrier" instruction
 		if (uop->at_barrier)
 		{
+
+			// change to ComputerUnit.cc:issue()
 			// Set a flag to wait until all wavefronts have
 			// reached the barrier
-			assert(!uop->getWavefrontPoolEntry()->wait_for_barrier);
-			uop->getWavefrontPoolEntry()->wait_for_barrier = true;
+			//assert(!uop->getWavefrontPoolEntry()->wait_for_barrier);
+
+			//uop->getWavefrontPoolEntry()->wait_for_barrier = true;
 
 			// Check if all wavefronts have reached the barrier
 			bool barrier_complete = true;
@@ -223,7 +233,19 @@ void ScalarUnit::Complete()
 			// if all the wavefonts in the work group are complete
 			if (work_group->getWavefrontsCompletedTiming() ==
 					work_group->getWavefrontsInWorkgroup())
+			{
 				work_group->finished_timing = true;
+
+			/// test
+/*
+				uop->getComputeUnit()->getTiming()->total_workgroups_finished++;
+				std::cout << "Finished Workgroup ID!! " << uop->getWavefront()->getWorkGroup()->getId()
+					<< "in cycle "<<uop->getComputeUnit()->getTiming()->getCycle()
+					<< " uop ID "<<uop->getId() << " CM ID "<<uop->getComputeUnit()->getIndex()
+					<< "TOTAL WG FINISHED " << uop->getComputeUnit()->getTiming()->total_workgroups_finished
+					<<std::endl;
+*/
+			}
 
 			// Check if wavefront finishes a work-group
 			assert(work_group->getWavefrontsCompletedTiming() <=
@@ -249,6 +271,19 @@ void ScalarUnit::Complete()
 				uop->getIdInComputeUnit(),
 				compute_unit->getIndex());
 
+		// Release Scoreboard
+		compute_unit->getScoreboard(uop->getWavefrontPoolId())->
+			ReleaseRegisters(uop->getWavefront(), uop);
+
+		/// test
+/*		if (uop->getWavefront()->getId() == 0)
+		{
+
+			std::cout<<"PC" << uop->getPC()<<"Finished at "<<
+					compute_unit->getTiming()->getCycle()<<std::endl;
+		}
+*/
+
 		// Access complete, remove the uop from the queue
 		it = write_buffer.erase(it);
 		assert(uop->getWorkGroup()->inflight_instructions > 0);
@@ -257,6 +292,9 @@ void ScalarUnit::Complete()
 		// Statistics
 		num_instructions++;
 		gpu->last_complete_cycle = compute_unit->getTiming()->getCycle();
+
+		///
+		compute_unit->last_complete_cycle = compute_unit->getTiming()->getCycle();
 	}
 }
 
@@ -672,6 +710,29 @@ void ScalarUnit::Decode()
 
 	// Initialize iterator
 	auto it = issue_buffer.begin();
+
+
+	/// test
+/*
+	if (compute_unit->getIndex() == 0)
+		std::cout<< "Issue buffer size "<<issue_buffer.size() <<"in cycle"
+				<<compute_unit->getTiming()->getCycle()<< std::endl;
+
+*/
+
+	/// test
+/*
+	for (auto m = issue_buffer.begin(); m != issue_buffer.end(); m++)
+	{
+		if (compute_unit->getIndex() == 0)
+		{
+			Uop *uop = m->get();
+			std::cout<<"In scalar unit issue buffer, Wavefront ID  "<<uop->getWavefront()->getId()<<
+							" PC " << uop->getPC() <<"in cycle"<<
+									compute_unit->getTiming()->getCycle()<<std::endl;
+		}
+	}
+*/
 
 	// Process completed instructions
 	while (it != issue_buffer.end())

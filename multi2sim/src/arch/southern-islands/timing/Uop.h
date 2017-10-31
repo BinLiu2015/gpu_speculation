@@ -66,6 +66,9 @@ class Uop
 	// Associated instruction
 	Instruction instruction;
 
+	// Instruction pc
+	long long pc;
+
 	// Associated wavefront, assigned in constructor
 	Wavefront *wavefront;
 
@@ -116,6 +119,9 @@ public:
 	bool finished;
 	bool vector_memory_global_coherency;
 	bool wavefront_last_instruction;
+	int lgkm_cnt;
+	int vm_cnt;
+	int exp_cnt;
 
 	/// Part of a GPU instruction specific for each work-item within wavefront
 	struct WorkItemInfo
@@ -212,6 +218,9 @@ public:
 		return destination_vector_register_index[index];
 	}
 
+	/// GET pc of the uop
+	long long getPC() { return pc; }
+
 	/// Set source scalar register index
 	void setSourceScalarRegisterIndex(unsigned index, int value)
 	{
@@ -243,6 +252,12 @@ public:
 	void setDestinationVectorRegisterIndex(unsigned index, int value)
 	{
 		destination_vector_register_index[index] = value;
+	}
+
+	/// Set pc of the uop
+	void setPC (long long pc)
+	{
+		this->pc = pc;
 	}
 
 	/// Cycle in which the uop is first ready after fetch

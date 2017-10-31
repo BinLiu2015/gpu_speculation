@@ -44,6 +44,7 @@ void WavefrontPoolEntry::Clear()
 	ready = false;
 	ready_next_cycle = false;
 	wavefront_finished = false;
+	active = false;
 }
 
 
@@ -95,6 +96,9 @@ void WavefrontPool::MapWavefronts(WorkGroup *work_group)
 		wavefront_pool_entry->setWavefront(wavefront);
 		wavefront->setWavefrontPoolEntry(wavefront_pool_entry);
 		
+		// store the index in normal index list
+		normal_wavefront_index_list.push_back(first_entry + entry_index);
+
 		// Increment the number of wavefronts associated with the 
 		// wavefront pool
 		num_wavefronts++;
@@ -131,6 +135,17 @@ void WavefrontPool::UnmapWavefronts(WorkGroup *work_group)
 
 		// Clear wavefront pool entry
 		wavefront_pool_entries[wf_id_in_wfp]->Clear();
+
+		// Erase index from normal wavefront list
+		for (auto i = normal_wavefront_index_list.begin();
+				i != normal_wavefront_index_list.end(); i++)
+		{
+			if (*i == wf_id_in_wfp)
+			{
+				normal_wavefront_index_list.erase(i);
+				break;
+			}
+		}
 	}
 	
 	// Adjust the number of wavefronts mapped to the wavefront pool

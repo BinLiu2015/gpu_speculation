@@ -2099,11 +2099,30 @@ void WorkItem::ISA_S_BARRIER_Impl(Instruction *instruction)
 	}
 }
 
+#define INST INST_SOPP
 void WorkItem::ISA_S_WAITCNT_Impl(Instruction *instruction)
 {
+
+	short simm16;
+	int vm_cnt;
+	int exp_cnt;
+	int lgkm_cnt;
+
+	simm16 = INST.simm16;
+
+	vm_cnt = simm16 & 0xF;
+	exp_cnt = (simm16 >> 4) & 0x7;
+	lgkm_cnt = (simm16 >> 8) & 0x1F;
+
+	wavefront->setVmcntValue(vm_cnt);
+	wavefront->setExpcntValue(exp_cnt);
+	wavefront->setLgkmcntValue(lgkm_cnt);
+
 	// Nothing to do in emulation
 	wavefront->setMemoryWait(true);
+
 }
+#undef INST
 
 void WorkItem::ISA_PHI_Impl(Instruction *instruction)
 {

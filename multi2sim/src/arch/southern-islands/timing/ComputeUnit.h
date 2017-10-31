@@ -81,6 +81,12 @@ class ComputeUnit
 	// Variable number of fetch buffers
 	std::vector<std::unique_ptr<FetchBuffer>> fetch_buffers;
 
+	//Variable number of pre execution buffers for specualation mode
+	std::vector<std::unique_ptr<FetchBuffer>> pre_execution_buffers;
+
+	// Variable number of fetch buffers for speculation mode
+	std::vector<std::unique_ptr<FetchBuffer>> speculation_fetch_buffers;
+
 	// Variable number of scoreboard
 	std::vector<std::unique_ptr<ScoreBoard>> scoreboard;
 
@@ -190,6 +196,9 @@ public:
 	/// Remove a work group pointer from the work_groups list
 	void RemoveWorkGroup(WorkGroup *work_group);
 
+	/// Return the scoreboard
+	ScoreBoard *getScoreboard(unsigned id) { return scoreboard[id].get(); }
+
 	/// Return the associated LDS module
 	mem::Module *getLdsModule() const { return lds_module.get(); }
 
@@ -248,6 +257,48 @@ public:
 
 	// Number of total mapped work groups for the compute unit
 	long long num_mapped_work_groups = 0;
+
+	// Number of total mapped wavefronts for the compute unit
+	long long num_mapped_wavefronts = 0;
+
+	//
+	long long num_total_speculation_instructions = 0;
+
+	//
+	long long num_scalar_speculation_instructions = 0;
+
+	//
+	long long num_scalar_memory_speculation_instructions = 0;
+
+	//
+	long long num_simd_speculation_instructions = 0;
+
+
+	//
+	long long num_lds_speculation_instructions = 0;
+
+	//
+	long long num_branch_speculation_instructions = 0;
+
+	//
+	long long num_vector_memory_speculation_instructions = 0;
+
+	//
+	long long num_total_speculation_mode = 0;
+
+	//
+	long long num_issued_instructions_in_speculation_mode = 0;
+
+	long long long_latency_stall_cycles = 0;
+
+	long long last_issue_cycle = 0;
+
+	long long last_complete_cycle = 0;
+
+	long long wavefront_pool_cycles = 0;
+
+	long long wavefront_pool_issued_cycles = 0;
+
 };
 
 }

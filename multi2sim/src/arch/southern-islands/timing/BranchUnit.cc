@@ -101,6 +101,10 @@ void BranchUnit::Complete()
 		// Allow next instruction to be fetched
 		uop->getWavefrontPoolEntry()->ready = true;
 
+		// Release Scoreboard
+		compute_unit->getScoreboard(uop->getWavefrontPoolId())->
+			ReleaseRegisters(uop->getWavefront(), uop);
+
 		// Access complete, remove the uop from the queue, and get the
 		// iterator for the next element
 		it = write_buffer.erase(it);

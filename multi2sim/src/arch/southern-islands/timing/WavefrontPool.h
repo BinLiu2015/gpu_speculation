@@ -99,6 +99,16 @@ public:
 	int lgkm_cnt = 0;
 
 
+	/// Number of vector memory access of current wait
+	int remain_vm_cnt = 0;
+
+	///
+	int remain_exp_cnt = 0;
+
+	///
+	int remain_lgkm_cnt = 0;
+
+
 
 	
 	// 
@@ -122,6 +132,32 @@ public:
 
 	/// Indicates whether the wavefront needs to wait for a memory access
 	bool mem_wait = false;
+
+	/// Indicates whether the wavefront in the entry is active for issue.
+	bool active = false;
+
+	/// Flag indicates current execution mode for the wavefront in the entry,
+	/// 0 is normal mode and 1 is pre-execution mode.
+	int execution_mode = 0;
+
+	/// Flag indicates the mode transfer from pre-execution mode to normal mode
+	bool specuation_to_normal = false;
+
+	/// Indicates whether the wavefront is waiting for a long latency operation
+	bool long_operation_wait = false;
+
+	/// waiting pc
+	long long waiting_pc = -1;
+
+	/// current pre-execution pc if the wavefront is in preexecution mode. Only
+	/// active when execution_mode
+	long long pre_fetch_pc = 0;
+
+	/// current pc for wavefront normal mode
+	long long normal_fetch_pc = 0;
+
+	// list of register number dependent with a long op
+	std::list<int> long_op_dependent_register;
 };
 
 
@@ -142,6 +178,12 @@ class WavefrontPool
 
 	// Wavefront pool entries that belong to this pool
 	std::vector<std::unique_ptr<WavefrontPoolEntry>> wavefront_pool_entries;
+
+	// Buffer of normal wavefront index
+	std::list<int> normal_wavefront_index_list;
+
+	// Buffer of pre-execution wavefront index
+	std::list<int> speculation_wavefront_index_list;
 
 public:
 
@@ -168,6 +210,102 @@ public:
 	std::vector<std::unique_ptr<WavefrontPoolEntry>>::iterator end()
 	{
 		return wavefront_pool_entries.end();
+	}
+
+	/// Return an iterator to the first element of the normal wavefront index
+	/// list
+	std::list<int>::iterator normal_list_begin()
+	{
+		return normal_wavefront_index_list.begin();
+	}
+
+	/// Return an iterator to the first elemet of the speculation wavefront
+	/// index list
+	std::list<int>::iterator speculation_list_begin()
+	{
+		return speculation_wavefront_index_list.begin();
+	}
+
+	/// Return normal wavefront index list size
+	int getNormalListSize()
+	{
+		return normal_wavefront_index_list.size();
+	}
+
+	/// Return speculation wavefront index list size
+	int getSpeculationListSize()
+	{
+		return speculation_wavefront_index_list.size();
+	}
+
+	///
+	int getNormalListIndexValue(int index)
+	{
+		auto p = normal_wavefront_index_list.begin();
+		int result = *p;
+		int i = 0;
+	    while (i < index)
+	    {
+	    	p++;
+	    	i++;
+	    	result = *p;
+	    }
+	    return result;
+	}
+
+	///
+	int getSpeculationListIndexValue (int index)
+	{
+		auto p = speculation_wavefront_index_list.begin();
+		int result = *p;
+		int i = 0;
+	    while (i < index)
+	    {
+	    	p++;
+	    	i++;
+	    	result = *p;
+	    }
+	    return result;
+	}
+
+	///
+	void push_backNormalList(int value)
+	{
+		normal_wavefront_index_list.push_back(value);
+	}
+
+	///
+	void push_backSpeculationList(int value)
+	{
+		speculation_wavefront_index_list.push_back(value);
+	}
+
+	///
+	void eraseNormalList(int value)
+	{
+		for (auto i = normal_wavefront_index_list.begin();
+				i != normal_wavefront_index_list.end(); i++)
+		{
+			if (*i == value)
+			{
+				normal_wavefront_index_list.erase(i);
+				break;
+			}
+		}
+	}
+
+	///
+	void eraseSpeculationList(int value)
+	{
+		for (auto i = speculation_wavefront_index_list.begin();
+				i != speculation_wavefront_index_list.end(); i++)
+		{
+			if (*i == value)
+			{
+				normal_wavefront_index_list.erase(i);
+				break;
+			}
+		}
 	}
 
 	/// Return the associated compute unit

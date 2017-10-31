@@ -126,6 +126,15 @@ class Wavefront
 	// Number of export instructions executed
 	long long export_instruction_count = 0;
 
+	//
+	int vm_cnt = 0;
+
+	//
+	int exp_cnt = 0;
+
+	//
+	int lgkm_cnt = 0;
+
 public:
 
 	/// Constructor
@@ -146,6 +155,14 @@ public:
 	// ID in the associated compute unit
 	int id_in_compute_unit = 0;
 
+	/// Number of inflight instructions for this wavefront
+	long long inflight_instructions = 0;
+
+	/// Number of fetched instructions for this wavefront
+	long long num_fetched_instructions = 0;
+
+	/// Number of issued instructions for this wavefront
+	long long num_issued_instructions = 0;
 
 
 
@@ -240,6 +257,9 @@ public:
 	/// Return true if the wavefront has completed
 	bool getFinished() const { return finished; }
 
+	/// Get current instruction size
+	int getInstructionSize() { return inst_size; }
+
 	/// Return true if the instruction performed a memory
 	/// wait operation
 	bool isMemoryWait() const { return memory_wait; }
@@ -251,6 +271,14 @@ public:
 		return vector_memory_global_coherency;
 	}
 
+	///
+	int getVmcnt() { return vm_cnt; }
+
+	///
+	int getExpcnt() { return exp_cnt; }
+
+	///
+	int getLgkmcnt() { return lgkm_cnt; }
 
 
 
@@ -286,7 +314,7 @@ public:
 
 	/// Flag set during instruction emulation to indicate that the
 	/// instruction performed a memory wait operation.
-	void setMemoryWait(bool mem_wait) { this->memory_wait = memory_wait; }
+	void setMemoryWait(bool mem_wait) { this->memory_wait = mem_wait; }
 
 	/// Flag set during instruction emulation to indicate that the wavefront
 	/// got stalled at a barrier.
@@ -359,6 +387,24 @@ public:
 	/// \param first_reg Id of the first scalar register
 	/// \param num_regs Number of scalar registers to be used, must be 2
 	void setSRegWithUAVTable(int first_reg, int num_regs);
+
+	///
+	void setVmcntValue(int value)
+	{
+		vm_cnt = value;
+	}
+
+	///
+	void setExpcntValue(int value)
+	{
+		exp_cnt = value;
+	}
+
+	///
+	void setLgkmcntValue(int value)
+	{
+		lgkm_cnt = value;
+	}
 
 	/// Dump wavefront in a human-readable format into output stream \a os
 	void Dump(std::ostream &os) const;

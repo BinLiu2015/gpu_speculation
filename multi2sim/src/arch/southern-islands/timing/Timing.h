@@ -21,6 +21,8 @@
 #define ARCH_SOUTHERN_ISLANDS_TIMING_TIMING_H
 
 #include <fstream>
+#include <utility>
+#include <map>
 
 #include <arch/common/Arch.h>
 #include <arch/common/Timing.h>
@@ -128,7 +130,20 @@ public:
 	// Pipeline debug
 	static misc::Debug pipeline_debug;
 
+	// Issue Scheduler mode
+	static unsigned issue_mode;
 
+	//
+	struct hint_format
+	{
+		unsigned int warp_change;
+		unsigned int mode;
+		int offset1;
+		int offset2;
+	};
+
+
+	std::map<int,hint_format> instruction_hint;
 
 	//
 	// Class members
@@ -188,6 +203,15 @@ public:
 
 	/// Get the pointer to the gpu object
 	Gpu *getGpu() const { return gpu.get(); }
+
+	/// Return true if hint file if empty
+	bool IsHintFileEmpty()
+	{
+		if (hint_file.empty())
+			return true;
+		else
+			return false;
+	}
 };
 
 
